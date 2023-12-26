@@ -1,8 +1,6 @@
-// eslint-disable-next-line import/no-unresolved
 import { app } from 'electron';
-import { MenuType } from '../types/menu';
 
-export const customMenuTemplate: MenuType[] = [
+export const customMenuTemplate: any = [
   {
     label: 'File',
     submenu: [
@@ -47,5 +45,4 @@ export const customMenuTemplate: MenuType[] = [
       },
     ],
   },
-  // Add more menu items as needed
 ];
