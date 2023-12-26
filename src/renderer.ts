@@ -1,178 +1,151 @@
 import './index.css';
 
-// const darkMode = {
-//   isDarkMode: false,
+type userCardType = {
+  _id: string;
+  heading: string;
+  name: string;
+  password: string;
+};
+const name = document.getElementById('name') as HTMLInputElement;
+const password = document.getElementById('password') as HTMLInputElement;
+const userInfo = document.getElementById('user-data') as HTMLDivElement;
 
-//   async toggle() {
-//     this.isDarkMode = !this.isDarkMode;
-//     document.body.classList.toggle('dark-mode', this.isDarkMode);
-//     return this.isDarkMode;
-//   },
+document.querySelector('#add').addEventListener('click', async (e) => {
+  e.preventDefault();
 
-//   async system() {
-//     this.isDarkMode = false;
-//     document.body.classList.remove('dark-mode');
-//   },
-// };
+  if (name.value === '' && password.value === '') {
+    createNotification('Error', 'Name and Password can not be empty');
+  } else {
+    const data = {
+      name: name.value,
+      password: password.value,
+    };
 
-// document
-//   .getElementById('toggle-dark-mode')
-//   .addEventListener('click', async () => {
-//     const isDarkMode = await darkMode.toggle();
-//     document.getElementById('theme-source').innerHTML = isDarkMode
-//       ? 'Dark'
-//       : 'Light';
-//   });
+    await fetch('http://localhost:5000/api/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then((data) => createNotification('Successful', data?.message))
+      .catch((error) => console.error('Error:', error));
 
-const notesInput = document.getElementById('note') as HTMLInputElement;
+    name.value = '';
+    password.value = '';
+  }
 
-document.addEventListener('DOMContentLoaded', function (): void {
-  showNotes();
+  window.location.reload();
 });
 
-const saveNote = document.getElementById('save-note');
-let isUpdateAble = false;
+document.addEventListener('DOMContentLoaded', async function () {
+  const userData = await fetch('http://localhost:5000/api/all')
+    .then((response) => response.json())
+    .then((data) => data)
+    .catch((err) => console.log(err));
 
-saveNote.addEventListener('click', createNote);
+  if (userData && userData.data) {
+    userData.data.map((item: userCardType, index: number) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const deleteButton = document.createElement('button');
+      deleteButton.className = 'btn btn-danger delete-btn';
 
-function createNote() {
-  const notes = window.localStorage.getItem('notes');
-  let notesText;
+      const editButton = document.createElement('button');
+      editButton.className = 'btn text-light btn-warning mt-2 edit-btn';
 
-  let text = '';
+      const updateButton = document.createElement('button');
+      updateButton.className = 'btn btn-success mt-2 update-btn';
 
-  if (notesInput.value === '') {
-    createNotification('Not Allowed', 'Some text are required to save note!!!');
-  } else {
-    text = notesInput.value;
+      const cardHeading = document.createElement('h4');
+      const name = document.createElement('p');
+      const password = document.createElement('p');
 
-    if (notes === null) {
-      notesText = [];
-    } else {
-      notesText = JSON.parse(notes);
-    }
+      cardHeading.textContent = `Card ${index + 1}`;
+      name.textContent = `Name: ${item.name}`;
+      password.textContent = `Password: ${item.password}`;
+      deleteButton.textContent = 'Delete';
+      updateButton.textContent = 'Update';
+      editButton.textContent = 'Edit';
 
-    notesText.push(text);
-    window.localStorage.setItem('notes', JSON.stringify(notesText));
+      card.appendChild(cardHeading);
+      card.appendChild(name);
+      card.appendChild(password);
+      card.appendChild(deleteButton);
+      card.appendChild(editButton);
+      card.appendChild(updateButton);
 
-    showNotes();
+      userInfo.appendChild(card);
 
-    notesInput.value = '';
-
-    createNotification('Success', 'Note Added Successfully.');
-  }
-}
-
-function showNotes(): void {
-  const notes = localStorage.getItem('notes');
-  let notesText;
-  if (notes == null) {
-    notesText = [];
-  } else {
-    notesText = JSON.parse(notes);
-  }
-
-  let html = '';
-  notesText.forEach(function (element: string, id: number): void {
-    html += `
-    <div class="noteCard my-2 mx-2 card" style="width: 18rem;">
-      <div class="card-body">
-        <h5 class="card-title">Note ${id + 1}</h5>
-        <p class="card-text"> ${element}</p>
-        <button data-id="${id}" class="btn btn-primary delete-note">Delete Note</button>
-      </div>
-    </div>`;
-  });
-
-  const notesElem = document.getElementById('notes');
-
-  if (notesText.length != 0) {
-    notesElem.innerHTML = html;
-
-    document.querySelectorAll('.delete-note').forEach((button) => {
-      button.addEventListener('click', function (event) {
-        const id = parseInt(
-          (event.currentTarget as HTMLButtonElement).getAttribute('data-id')
-        );
-        deleteNote(id);
+      document.querySelectorAll('.delete-btn').forEach((button) => {
+        button.addEventListener('click', function () {
+          deleteUser(item._id);
+        });
+      });
+      document.querySelectorAll('.edit-btn').forEach((button) => {
+        button.addEventListener('click', function () {
+          editUser(item?.name, item?.password);
+        });
+      });
+      document.querySelectorAll('.update-btn').forEach((button) => {
+        button.addEventListener('click', function () {
+          updateUser(item?._id);
+        });
       });
     });
-
-    document.querySelectorAll('.edit-note').forEach((button) => {
-      button.addEventListener('click', function (event) {
-        const id = parseInt(
-          (event.currentTarget as HTMLButtonElement).getAttribute('data-id')
-        );
-
-        editNote(id);
-      });
-    });
-
-    document.querySelectorAll('.edit-note').forEach((button) => {
-      button.addEventListener('click', function (event) {
-        const id = parseInt(
-          (event.currentTarget as HTMLButtonElement).getAttribute('data-id')
-        );
-
-        updateNote(id);
-      });
-    });
-  } else {
-    notesElem.innerHTML = `Nothing to show use Add Notes to add Notes`;
-    notesElem.style.fontSize = '25px';
-    notesElem.style.marginTop = '10px';
   }
+});
+
+function editUser(names: string, passwords: string) {
+  name.value = names;
+  password.value = passwords;
 }
 
-function deleteNote(id: number): void {
-  const notes = localStorage.getItem('notes');
-  let notesText;
-  if (notes == null) {
-    notesText = [];
+async function updateUser(id: string) {
+  if (name.value === '' && password.value === '') {
+    createNotification('Error', 'Name and Password can not be empty');
   } else {
-    notesText = JSON.parse(notes);
+    const data = {
+      name: name.value,
+      password: password.value,
+    };
+
+    await fetch(`http://localhost:5000/api/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then((data) => createNotification('Successful', data?.message))
+      .catch((error) => console.error('Error:', error));
+
+    name.value = '';
+    password.value = '';
   }
 
-  notesText.splice(id, 1);
-  createNotification('Successful', 'Note Deleted Successfully');
-  localStorage.setItem('notes', JSON.stringify(notesText));
-  showNotes();
+  window.location.reload();
 }
 
-function editNote(id: number) {
-  const notes = localStorage.getItem('notes');
-  let notesText;
-  isUpdateAble = true;
+async function deleteUser(id: string) {
+  await fetch(`http://localhost:5000/api/${id}`, { method: 'DELETE' })
+    .then((response) => response.json())
+    .then((data) => createNotification('Successful', data?.message))
+    .catch((err) => console.log(err));
 
-  if (notes === null) {
-    notesText = [];
-  } else {
-    notesText = JSON.parse(notes);
-  }
-
-  notesInput.value = notesText[id];
-}
-
-function updateNote(id: number) {
-  const notes = localStorage.getItem('notes');
-  let notesObj;
-
-  if (notes === null) {
-    notesObj = [];
-  } else {
-    notesObj = JSON.parse(notes);
-  }
-  let text = '';
-
-  text = notesInput.value;
-
-  console.log('Text', text);
-
-  notesObj.splice(id, 1, text);
-
-  localStorage.setItem('notes', JSON.stringify(notesObj));
-
-  showNotes();
+  window.location.reload();
 }
 
 function createNotification(title: string, body: string): void {

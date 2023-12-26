@@ -11,18 +11,27 @@
     />
   </head>
   <body>
-    <h1>Add Notes</h1>
-    <div>
+    <h1 class="fw-bold text-primary text-center">LOGIN</h1>
+    <form class="container">
       <input
         class="form-control"
-        id="note"
+        name="name"
+        id="name"
         type="text"
-        placeholder="Add Note"
+        placeholder="Name"
       />
-      <button class="btn btn-success mt-3" id="save-note">Save</button>
-    </div>
+      <input
+        class="form-control mt-3"
+        name="password"
+        type="password"
+        id="password"
+        placeholder="Password"
+      />
+      <button class="btn btn-success mt-3" id="add">Add</button>
+      <button class="btn btn-danger mt-3 ms-2" id="delete">Delete</button>
+    </form>
 
-    <div id="notes"></div>
+    <section id="user-data"></section>
 
     <script type="module" src="/src/renderer.ts"></script>
   </body>
